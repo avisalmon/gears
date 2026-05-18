@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GearLab — Development Dashboard</title>
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --surface2:  #22263a;
+      --border:    #2e3250;
+      --text:      #e2e4f0;
+      --muted:     #7a7f9a;
+      --accent:    #5b6af0;
+      --green:     #3ecf8e;
+      --yellow:    #f0c94a;
+      --red:       #f05b5b;
+      --orange:    #f0924a;
+      --purple:    #a56bf0;
+      --radius:    10px;
+      --font:      'Segoe UI', system-ui, sans-serif;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .page-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .page-header h1 .gear-icon { font-size: 28px; }
+    .last-updated {
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--surface2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    @media (max-width: 900px) {
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .grid-4, .grid-3 { grid-template-columns: 1fr 1fr; }
+    }
+
+    section { margin-bottom: 28px; }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+    }
+    .card-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .card-value {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .card-sub { font-size: 12px; color: var(--muted); }
+    .card.green  .card-value { color: var(--green); }
+    .card.yellow .card-value { color: var(--yellow); }
+    .card.red    .card-value { color: var(--red); }
+    .card.accent .card-value { color: var(--accent); }
+    .card.purple .card-value { color: var(--purple); }
+
+    /* ── Sprint Banner ── */
+    .sprint-banner {
+      background: linear-gradient(135deg, #1e2240 0%, #252a45 100%);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .sprint-badge {
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .sprint-info h2 { font-size: 18px; font-weight: 700; }
+    .sprint-info p  { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .sprint-status-pill {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1px solid;
+    }
+    .sprint-status-pill.planning  { color: var(--yellow); border-color: var(--yellow); }
+    .sprint-status-pill.active    { color: var(--green);  border-color: var(--green);  }
+    .sprint-status-pill.review    { color: var(--purple); border-color: var(--purple); }
+    .sprint-status-pill.complete  { color: var(--muted);  border-color: var(--muted);  }
+
+    /* ── Progress Bar ── */
+    .progress-bar-wrap { margin-bottom: 14px; }
+    .progress-bar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+    .progress-bar-name { font-size: 13px; font-weight: 600; }
+    .progress-bar-meta { font-size: 12px; color: var(--muted); }
+    .progress-bar-track {
+      height: 8px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+      display: flex;
+      gap: 2px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+    .fill-done     { background: var(--green); }
+    .fill-progress { background: var(--accent); }
+    .fill-blocked  { background: var(--red); }
+
+    /* ── Test Panel ── */
+    .test-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    @media (max-width: 700px) { .test-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .test-card {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+    }
+    .test-card .num { font-size: 28px; font-weight: 800; }
+    .test-card .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+    .test-card.passing .num { color: var(--green); }
+    .test-card.failing  .num { color: var(--red); }
+    .test-card.total    .num { color: var(--accent); }
+    .test-card.coverage .num { color: var(--yellow); }
+
+    /* ── Status Legend ── */
+    .status-dot {
+      display: inline-block;
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+    .dot-done     { background: var(--green); }
+    .dot-progress { background: var(--accent); }
+    .dot-blocked  { background: var(--red); }
+    .dot-deferred { background: var(--orange); }
+    .dot-pending  { background: var(--surface2); border: 1px solid var(--border); }
+
+    /* ── Epic Table ── */
+    .epic-table { width: 100%; border-collapse: collapse; }
+    .epic-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      padding: 0 12px 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .epic-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      vertical-align: middle;
+    }
+    .epic-table tr:last-child td { border-bottom: none; }
+    .epic-table tr:hover td { background: var(--surface2); }
+    .epic-id {
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      text-transform: uppercase;
+    }
+    .tag-dev    { background: #1e2f5e; color: #6fa3ff; }
+    .tag-design { background: #2e1e5e; color: #c06aff; }
+    .tag-qa     { background: #1e3e2e; color: #3ecf8e; }
+    .tag-mixed  { background: #3e2e1e; color: #f0a04a; }
+
+    .mini-bar-wrap {
+      width: 100px;
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .mini-bar { height: 100%; background: var(--green); border-radius: 99px; }
+
+    /* ── Sprint History ── */
+    .history-table { width: 100%; border-collapse: collapse; }
+    .history-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      padding: 0 12px 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .history-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+      vertical-align: top;
+    }
+    .history-table tr:last-child td { border-bottom: none; }
+    .history-empty {
+      text-align: center;
+      padding: 32px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* ── Activity Feed ── */
+    .activity-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    .activity-date { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .activity-text { font-size: 13px; }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 36px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   DASHBOARD DATA — Update this object after every sprint.
+   See docs/manager.md §8.2 for the update protocol.
+════════════════════════════════════════════════════════════════════ */
+const DASHBOARD_DATA = {
+
+  lastUpdated:   "2026-05-26",
+  currentEpic:   "E05",
+  currentSprint: "E05-S1",
+  sprintGoal:    "Mode switcher + adaptive UI: 5-mode top toolbar, ModeController, edit controls hidden outside Engineer",
+  sprintStatus:  "review",
+
+  /* ── Test Counts ── */
+  tests: {
+    total:    137,
+    passing:  137,
+    failing:  0,
+    coverage: 0
+  },
+
+  /* ── Overall Item Totals ── */
+  totals: {
+    items:      205,
+    done:       47,
+    inProgress: 0,
+    blocked:    0,
+    deferred:   13
+  },
+
+  /* ── Per-Epic Progress ── */
+  epics: [
+    { id:"E01", name:"Infrastructure & Foundation",    type:"Dev",    total:15, done:15, inProgress:0, blocked:0 },
+    { id:"E02", name:"Visual Design System",           type:"Design", total:33, done:0,  inProgress:0, blocked:0 },
+    { id:"E03", name:"Canvas & Rendering Engine",      type:"Dev",    total:20, done:13, inProgress:0, blocked:0 },
+    { id:"E04", name:"Gear Mechanics & Kinematics",    type:"Dev",    total:18, done:13, inProgress:0, blocked:0 },
+    { id:"E05", name:"Application Shell & UI Modes",   type:"Dev",    total:16, done:6,  inProgress:0, blocked:0 },
+    { id:"E06", name:"Educational Overlay",            type:"Mixed",  total:8,  done:0,  inProgress:0, blocked:0 },
+    { id:"E07", name:"Puzzle & Challenge System",      type:"Mixed",  total:22, done:0,  inProgress:0, blocked:0 },
+    { id:"E08", name:"Presentation & Teacher Mode",    type:"Mixed",  total:12, done:0,  inProgress:0, blocked:0 },
+    { id:"E09", name:"Gamification & Progression",     type:"Mixed",  total:12, done:0,  inProgress:0, blocked:0 },
+    { id:"E10", name:"Research Mode",                  type:"Dev",    total:14, done:0,  inProgress:0, blocked:0 },
+    { id:"E11", name:"Save, Load & Data Management",   type:"Dev",    total:8,  done:0,  inProgress:0, blocked:0 },
+    { id:"E12", name:"Onboarding & UX Polish",         type:"QA",     total:20, done:0,  inProgress:0, blocked:0 },
+    { id:"E13", name:"Packaging & Release",            type:"Mixed",  total:7,  done:0,  inProgress:0, blocked:0 },
+  ],
+
+  /* ── Sprint History ── */
+  sprintHistory: [
+    { sprint:"E05-S1", closed:"2026-05-26", itemsDone:6,  testsAdded:14, regression:"Pass", notes:"Mode switcher toolbar (5 modes), ModeController, _set_mode, _apply_mode_ui. Edit controls hidden in Explorer/Student/Puzzle/Presentation. 1 item deferred (persistence)." },
+    { sprint:"E03-S2", closed:"2026-05-23", itemsDone:5,  testsAdded:11, regression:"Pass", notes:"Click-to-select, drag-to-move, snap-to-mesh, Add Gear, Delete, live _rebuild_system(). 5 deferred (undo, belt, chain, duplicate)." },
+    { sprint:"E04-S2", closed:"2026-05-23", itemsDone:5,  testsAdded:19, regression:"Pass", notes:"Defect simulation: missing/chipped tooth spur_gear_path(), GearItem.flash(), defect_at_contact(), AnimationController slip+callback. 3 items deferred." },
+    { sprint:"E03-S1", closed:"2026-05-17", itemsDone:8,  testsAdded:38, regression:"Pass", notes:"Involute gear profiles, GearItem, AnimationController, direction colours, play/pause/step toolbar, showEvent fitInView fix." },
+    { sprint:"E04-S1", closed:"2026-05-17", itemsDone:8,  testsAdded:21, regression:"Pass", notes:"Full kinematics engine: BFS propagation, direction rules, validation, loop detection." },
+    { sprint:"E01-S2", closed:"2026-05-17", itemsDone:8,  testsAdded:24, regression:"Pass", notes:"All 7 data-model items done plus E01-S1-08 (ruff). 34 total tests passing." },
+    { sprint:"E01-S1", closed:"2026-05-17", itemsDone:7,  testsAdded:10, regression:"Pass", notes:"All P1 scaffold items done. E01-S1-08 (linting) deferred to E01-S2." }
+  ],
+
+  /* ── Recent Activity — keep last 8, most recent first ── */
+  recentActivity: [
+    { date:"2026-05-26", text:"E05-S1 closed. 137/137 tests passing. Mode switcher + adaptive UI live." },
+    { date:"2026-05-26", text:"ui/mode.py: AppMode enum (5 modes), ModeController with shows_edit/defect/formula/ratio_badge." },
+    { date:"2026-05-26", text:"app.py: top mode-bar toolbar, _set_mode(), _apply_mode_ui() hides edit controls outside Engineer." },
+    { date:"2026-05-23", text:"E03-S2 closed. 123/123 tests passing. Interactive gear canvas live." },
+    { date:"2026-05-23", text:"snap.py: snap_position() snaps dragged gear to exact CD of nearest anchor." },
+    { date:"2026-05-23", text:"E04-S2 closed. 112/112 tests passing. Missing/chipped tooth visuals live." },
+    { date:"2026-05-23", text:"AnimationController: defect engagement detection + flash callback." },
+    { date:"2026-05-17", text:"E03-S1 closed. 93/93 tests passing. Gears animate with involute profiles." },
+  ]
+};
+/* ════════════════════════════════════════════════════════════════════
+   END OF DATA — Do not edit below this line unless updating the UI.
+════════════════════════════════════════════════════════════════════ */
+</script>
+
+<div class="page-header">
+  <h1><span class="gear-icon">⚙️</span> GearLab — Dev Dashboard</h1>
+  <span class="last-updated" id="last-updated"></span>
+</div>
+
+<!-- ── Sprint Banner ── -->
+<section>
+  <div class="sprint-banner">
+    <span class="sprint-badge" id="sprint-id"></span>
+    <div class="sprint-info">
+      <h2 id="sprint-goal"></h2>
+      <p id="sprint-epic"></p>
+    </div>
+    <span class="sprint-status-pill" id="sprint-status-pill"></span>
+  </div>
+</section>
+
+<!-- ── Summary Cards ── -->
+<section>
+  <div class="section-title">Overall Progress</div>
+  <div class="grid-4">
+    <div class="card accent">
+      <div class="card-label">Total Items</div>
+      <div class="card-value" id="stat-total"></div>
+      <div class="card-sub">across 13 epics</div>
+    </div>
+    <div class="card green">
+      <div class="card-label">Done</div>
+      <div class="card-value" id="stat-done"></div>
+      <div class="card-sub" id="stat-done-pct"></div>
+    </div>
+    <div class="card yellow">
+      <div class="card-label">In Progress</div>
+      <div class="card-value" id="stat-progress"></div>
+      <div class="card-sub" id="stat-progress-pct"></div>
+    </div>
+    <div class="card red">
+      <div class="card-label">Blocked</div>
+      <div class="card-value" id="stat-blocked"></div>
+      <div class="card-sub" id="stat-deferred-info"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Test Status ── -->
+<section>
+  <div class="section-title">Test Suite</div>
+  <div class="card">
+    <div class="test-grid">
+      <div class="test-card total">
+        <div class="num" id="test-total"></div>
+        <div class="lbl">Tests Total</div>
+      </div>
+      <div class="test-card passing">
+        <div class="num" id="test-passing"></div>
+        <div class="lbl">Passing ✓</div>
+      </div>
+      <div class="test-card failing">
+        <div class="num" id="test-failing"></div>
+        <div class="lbl">Failing ✗</div>
+      </div>
+      <div class="test-card coverage">
+        <div class="num" id="test-coverage"></div>
+        <div class="lbl">Coverage %</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Epic Progress ── -->
+<section>
+  <div class="section-title">Epic Progress</div>
+  <div class="card">
+    <div id="epic-bars"></div>
+  </div>
+</section>
+
+<!-- ── Epic Table + Activity ── -->
+<div class="grid-2">
+
+  <!-- Epic Table -->
+  <section>
+    <div class="section-title">Epic Breakdown</div>
+    <div class="card" style="padding:0; overflow:hidden;">
+      <table class="epic-table" id="epic-table">
+        <thead>
+          <tr>
+            <th>Epic</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Done</th>
+            <th>Progress</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Activity -->
+  <section>
+    <div class="section-title">Recent Activity</div>
+    <div class="card" id="activity-feed"></div>
+  </section>
+
+</div>
+
+<!-- ── Sprint History ── -->
+<section>
+  <div class="section-title">Sprint History</div>
+  <div class="card" style="padding:0; overflow:hidden;">
+    <table class="history-table" id="history-table">
+      <thead>
+        <tr>
+          <th>Sprint</th>
+          <th>Closed</th>
+          <th>Items Done</th>
+          <th>Tests Added</th>
+          <th>Regression</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  GearLab &nbsp;·&nbsp;
+  <a href="spec.md">spec.md</a> &nbsp;·&nbsp;
+  <a href="UX.md">UX.md</a> &nbsp;·&nbsp;
+  <a href="backlog.md">backlog.md</a> &nbsp;·&nbsp;
+  <a href="manager.md">manager.md</a>
+</footer>
+
+<script>
+(function () {
+  const D = DASHBOARD_DATA;
+
+  /* ── Helpers ── */
+  const $ = id => document.getElementById(id);
+  const pct = (n, total) => total === 0 ? '0%' : Math.round(n / total * 100) + '%';
+  const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+
+  /* ── Header ── */
+  $('last-updated').textContent = 'Updated: ' + D.lastUpdated;
+
+  /* ── Sprint Banner ── */
+  $('sprint-id').textContent    = D.currentSprint;
+  $('sprint-goal').textContent  = D.sprintGoal;
+  $('sprint-epic').textContent  = 'Epic: ' + D.currentEpic;
+  const pill = $('sprint-status-pill');
+  const statusLabels = { planning:'Planning', active:'Active', review:'In Review', complete:'Complete' };
+  pill.textContent  = statusLabels[D.sprintStatus] || D.sprintStatus;
+  pill.className    = 'sprint-status-pill ' + D.sprintStatus;
+
+  /* ── Summary Cards ── */
+  const T = D.totals;
+  $('stat-total').textContent       = T.items;
+  $('stat-done').textContent        = T.done;
+  $('stat-done-pct').textContent    = pct(T.done, T.items) + ' complete';
+  $('stat-progress').textContent    = T.inProgress;
+  $('stat-progress-pct').textContent = pct(T.inProgress, T.items) + ' of total';
+  $('stat-blocked').textContent     = T.blocked;
+  $('stat-deferred-info').textContent = T.deferred + ' deferred';
+
+  /* ── Test Suite ── */
+  $('test-total').textContent    = D.tests.total;
+  $('test-passing').textContent  = D.tests.passing;
+  $('test-failing').textContent  = D.tests.failing;
+  $('test-coverage').textContent = D.tests.coverage + '%';
+
+  /* ── Epic Progress Bars ── */
+  const barsEl = $('epic-bars');
+  D.epics.forEach(e => {
+    const donePct  = clamp((e.done / e.total) * 100, 0, 100);
+    const progPct  = clamp((e.inProgress / e.total) * 100, 0, 100 - donePct);
+    const blkPct   = clamp((e.blocked / e.total) * 100, 0, 100 - donePct - progPct);
+    const isCurrent = e.id === D.currentEpic;
+
+    barsEl.innerHTML += `
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-header">
+          <span class="progress-bar-name" style="${isCurrent ? 'color:var(--accent)' : ''}">
+            ${isCurrent ? '▶ ' : ''}${e.id} — ${e.name}
+          </span>
+          <span class="progress-bar-meta">${e.done} / ${e.total} done</span>
+        </div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill fill-done"     style="width:${donePct}%"></div>
+          <div class="progress-bar-fill fill-progress" style="width:${progPct}%"></div>
+          <div class="progress-bar-fill fill-blocked"  style="width:${blkPct}%"></div>
+        </div>
+      </div>`;
+  });
+
+  /* ── Epic Table ── */
+  const tbody = document.querySelector('#epic-table tbody');
+  D.epics.forEach(e => {
+    const donePct = clamp((e.done / e.total) * 100, 0, 100);
+    const typeClass = { Dev:'tag-dev', Design:'tag-design', QA:'tag-qa', Mixed:'tag-mixed' }[e.type] || 'tag-dev';
+    const isCurrent = e.id === D.currentEpic;
+    tbody.innerHTML += `
+      <tr>
+        <td><span class="epic-id">${e.id}</span>${isCurrent ? ' <span style="color:var(--accent);font-size:10px">◀ now</span>' : ''}</td>
+        <td style="max-width:200px;">${e.name}</td>
+        <td><span class="tag ${typeClass}">${e.type}</span></td>
+        <td style="color:${e.done > 0 ? 'var(--green)' : 'var(--muted)'};">${e.done}/${e.total}</td>
+        <td>
+          <div class="mini-bar-wrap">
+            <div class="mini-bar" style="width:${donePct}%"></div>
+          </div>
+        </td>
+      </tr>`;
+  });
+
+  /* ── Activity Feed ── */
+  const feed = $('activity-feed');
+  D.recentActivity.forEach(a => {
+    feed.innerHTML += `
+      <div class="activity-item">
+        <div class="activity-dot"></div>
+        <div>
+          <div class="activity-date">${a.date}</div>
+          <div class="activity-text">${a.text}</div>
+        </div>
+      </div>`;
+  });
+
+  /* ── Sprint History ── */
+  const histTbody = document.querySelector('#history-table tbody');
+  if (D.sprintHistory.length === 0) {
+    histTbody.innerHTML = `<tr><td colspan="6" class="history-empty">No completed sprints yet. History will appear here after Gate 2 approval.</td></tr>`;
+  } else {
+    D.sprintHistory.forEach(s => {
+      const regColor = s.regression === 'Pass' ? 'var(--green)' : 'var(--red)';
+      histTbody.innerHTML += `
+        <tr>
+          <td><span class="epic-id">${s.sprint}</span></td>
+          <td>${s.closed}</td>
+          <td style="color:var(--green)">${s.itemsDone}</td>
+          <td style="color:var(--accent)">${s.testsAdded}</td>
+          <td style="color:${regColor};font-weight:700">${s.regression}</td>
+          <td>${s.notes}</td>
+        </tr>`;
+    });
+  }
+
+})();
+</script>
+</body>
+</html>

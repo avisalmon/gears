@@ -17,7 +17,7 @@ def snap_position(
     tooth_count: int,
     module: float,
     anchors: list[tuple[float, float, int, float]],
-    snap_radius_frac: float = 1.5,
+    snap_radius_frac: float = 1.1,
 ) -> tuple[float, float] | None:
     """
     Return the snapped (x, y) position or *None* if no anchor is close enough.
@@ -29,8 +29,8 @@ def snap_position(
     module          : module of the gear being dragged
     anchors         : list of (x, y, tooth_count, module) for all other gears
     snap_radius_frac: fraction of center distance used as the snap activation
-                      radius (default 1.5 = snap when within 1.5 × CD,
-                      so pitch circles touching always triggers snap)
+                      radius (default 1.1 = snap only when pitch circles are
+                      nearly touching, i.e. within 10% of CD)
 
     The function finds the *closest* anchor within snap range and returns
     the point at exact center distance from that anchor in the drag direction.

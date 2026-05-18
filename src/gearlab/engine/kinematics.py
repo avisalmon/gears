@@ -169,12 +169,41 @@ def solve(system: GearSystem) -> GearSystem:
             )
             queue.append(neighbour_id)
 
-    # Gears never reached keep rpm=0; assign a default direction
+    # Gears never reached by BFS: zero their RPM so they don't spin.
     for g in result.elements:
+        if g.id not in visited:
+            g.rpm = 0.0
         if not hasattr(g, "_direction"):
             g._direction = Direction.CW  # type: ignore[attr-defined]
 
     return result
+
+
+def has_direction_conflict(system: GearSystem) -> bool:
+    """
+    Return True if any connection in the *solved* system has contradictory
+    gear directions (e.g. a gear caught between two gears that demand it spin
+    in opposite directions simultaneously).
+
+    Must be called on the result of solve(), not the raw system.
+    """
+    by_id: dict[uuid.UUID, Gear] = {g.id: g for g in system.elements}
+    for conn in system.connections:
+        ga = by_id.get(conn.element_a)
+        gb = by_id.get(conn.element_b)
+        if ga is None or gb is None:
+            continue
+        dir_a = getattr(ga, "_direction", None)
+        dir_b = getattr(gb, "_direction", None)
+        if dir_a is None or dir_b is None:
+            continue
+        # Skip pairs where neither gear is actually spinning
+        if ga.rpm == 0.0 and gb.rpm == 0.0:
+            continue
+        expected_b = _driven_direction(ga, gb, conn, dir_a)
+        if expected_b != dir_b:
+            return True
+    return False
 
 
 # ── Loop detection ───────────────────────────────────────────────────────────

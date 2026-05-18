@@ -389,6 +389,9 @@ class GearLabApp(QMainWindow):
         system = solve(system)
 
         self._controller = AnimationController(system)
+        # Preserve current speed — rebuild must not reset to 1.0×
+        if hasattr(self, "_speed_slider"):
+            self._controller.set_speed(self._speed_slider.value() / 10.0)
         for g_solved, item in pairs:
             g = next(x for x in system.elements if x.id == g_solved.id)
             item._gear.rpm = g.rpm
@@ -397,6 +400,18 @@ class GearLabApp(QMainWindow):
             self._controller.register(g.id, item)
         self._controller.set_defect_callback(self._on_defect_engaged)
         self._controller.start()
+
+        # Conflict detection: freeze if a gear is caught between contradicting neighbours
+        from gearlab.engine.kinematics import has_direction_conflict
+        if has_direction_conflict(system):
+            self._controller.pause()
+            if hasattr(self, "_conflict_label"):
+                self._conflict_label.setText("  ⚠ Gear conflict — system locked  ")
+                self._conflict_label.setStyleSheet("color: #ff4444; font-weight: bold;")
+        else:
+            if hasattr(self, "_conflict_label"):
+                self._conflict_label.setText("")
+
         self._update_gear_labels()
 
     # ------------------------------------------------------------------
@@ -449,13 +464,19 @@ class GearLabApp(QMainWindow):
         self._speed_slider = QSlider(Qt.Orientation.Horizontal)
         self._speed_slider.setMinimum(1)    # represents 0.1×
         self._speed_slider.setMaximum(100)  # represents 10.0×
-        self._speed_slider.setValue(10)     # default 1.0×
         self._speed_slider.setFixedWidth(160)
-        self._speed_slider.valueChanged.connect(self._on_speed_changed)
         bar.addWidget(self._speed_slider)
 
-        self._speed_label = QLabel("1.0×  ")
+        self._speed_label = QLabel("0.2×  ")
         bar.addWidget(self._speed_label)
+
+        # Connect after label exists so _on_speed_changed can update it.
+        # setValue triggers valueChanged which applies the speed to the controller.
+        self._speed_slider.valueChanged.connect(self._on_speed_changed)
+        self._speed_slider.setValue(2)      # default 0.2× — slow
+
+        self._conflict_label = QLabel("")
+        bar.addWidget(self._conflict_label)
 
     def _on_tooth_count_changed(self, v: int) -> None:
         """Spinbox changed: update selected gear's tooth count, or set new-gear default."""

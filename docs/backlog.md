@@ -293,15 +293,15 @@ Each **Item** is a single deliverable: design, development, or QA.
 
 | ID | Feature | Type | Priority | Status | Notes |
 |----|---------|------|----------|--------|-------|
-| E05-S2-01 | Toolbox panel with drag-to-canvas elements (gear, belt, chain, rack) | Dev | P1 | Not Started | Per E02-S2-02 design |
-| E05-S2-02 | Properties panel: tooth count slider + numeric input (live canvas update <100ms) | Dev | P1 | Not Started | Spec §14.1.2 |
-| E05-S2-03 | Properties panel: module / pitch input (Engineer mode only) | Dev | P1 | Not Started | |
-| E05-S2-04 | Properties panel: calculated RPM and ratio display (read-only, auto-updated) | Dev | P1 | Not Started | |
-| E05-S2-05 | Properties panel: rotation direction indicator | Dev | P1 | Not Started | |
-| E05-S2-06 | Properties panel: per-tooth defect toggle grid (Engineer mode only) | Dev | P1 | Not Started | Spec §3.2.7 |
-| E05-S2-07 | Properties panel: "set as driver" toggle; RPM input for driver gear | Dev | P1 | Not Started | Spec §3.1.6 |
-| E05-S2-08 | Status bar: global ratio, output RPM, current mode, zoom level | Dev | P1 | Not Started | Spec §4.1 |
-| E05-S2-09 | "Why?" tooltip on gear hover (plain language, <300ms) | Dev | P1 | Not Started | Spec §14.1.3; UX US-M3 |
+| E05-S2-01 | Toolbox panel with drag-to-canvas elements (gear, belt, chain, rack) | Dev | P1 | Deferred | Complex drag-from-panel; deferred to E05-S3 |
+| E05-S2-02 | Properties panel: tooth count slider + numeric input (live canvas update <100ms) | Dev | P1 | Done | |
+| E05-S2-03 | Properties panel: module / pitch input (Engineer mode only) | Dev | P1 | Done | |
+| E05-S2-04 | Properties panel: calculated RPM and ratio display (read-only, auto-updated) | Dev | P1 | Done | |
+| E05-S2-05 | Properties panel: rotation direction indicator | Dev | P1 | Done | |
+| E05-S2-06 | Properties panel: per-tooth defect toggle grid (Engineer mode only) | Dev | P1 | Done | |
+| E05-S2-07 | Properties panel: "set as driver" toggle; RPM input for driver gear | Dev | P1 | Done | |
+| E05-S2-08 | Status bar: global ratio, output RPM, current mode, zoom level | Dev | P1 | Done | Scroll-to-zoom also added |
+| E05-S2-09 | "Why?" tooltip on gear hover (plain language, <300ms) | Dev | P1 | Done | |
 
 ---
 

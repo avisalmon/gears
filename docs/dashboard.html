@@ -317,14 +317,14 @@ const DASHBOARD_DATA = {
 
   lastUpdated:   "2026-05-26",
   currentEpic:   "E05",
-  currentSprint: "E05-S1",
+  currentSprint: "E06-S1",
   sprintGoal:    "Mode switcher + adaptive UI: 5-mode top toolbar, ModeController, edit controls hidden outside Engineer",
   sprintStatus:  "review",
 
   /* ── Test Counts ── */
   tests: {
     total:    137,
-    passing:  137,
+    passing:  162,
     failing:  0,
     coverage: 0
   },
@@ -332,7 +332,7 @@ const DASHBOARD_DATA = {
   /* ── Overall Item Totals ── */
   totals: {
     items:      205,
-    done:       47,
+    done:       55,
     inProgress: 0,
     blocked:    0,
     deferred:   13
@@ -344,7 +344,7 @@ const DASHBOARD_DATA = {
     { id:"E02", name:"Visual Design System",           type:"Design", total:33, done:0,  inProgress:0, blocked:0 },
     { id:"E03", name:"Canvas & Rendering Engine",      type:"Dev",    total:20, done:13, inProgress:0, blocked:0 },
     { id:"E04", name:"Gear Mechanics & Kinematics",    type:"Dev",    total:18, done:13, inProgress:0, blocked:0 },
-    { id:"E05", name:"Application Shell & UI Modes",   type:"Dev",    total:16, done:6,  inProgress:0, blocked:0 },
+    { id:"E05", name:"Application Shell & UI Modes",   type:"Dev",    total:16, done:14, inProgress:0, blocked:0 },
     { id:"E06", name:"Educational Overlay",            type:"Mixed",  total:8,  done:0,  inProgress:0, blocked:0 },
     { id:"E07", name:"Puzzle & Challenge System",      type:"Mixed",  total:22, done:0,  inProgress:0, blocked:0 },
     { id:"E08", name:"Presentation & Teacher Mode",    type:"Mixed",  total:12, done:0,  inProgress:0, blocked:0 },
@@ -357,6 +357,7 @@ const DASHBOARD_DATA = {
 
   /* ── Sprint History ── */
   sprintHistory: [
+    { sprint:"E05-S2", closed:"2026-05-18", itemsDone:8,  testsAdded:22, regression:"Pass", notes:"Properties panel dock (teeth slider, module, RPM, ratio, direction, driver toggle, defect grid). Status bar. Scroll-to-zoom. Why? tooltips. 1 item deferred (toolbox drag)." },
     { sprint:"E05-S1", closed:"2026-05-26", itemsDone:6,  testsAdded:14, regression:"Pass", notes:"Mode switcher toolbar (5 modes), ModeController, _set_mode, _apply_mode_ui. Edit controls hidden in Explorer/Student/Puzzle/Presentation. 1 item deferred (persistence)." },
     { sprint:"E03-S2", closed:"2026-05-23", itemsDone:5,  testsAdded:11, regression:"Pass", notes:"Click-to-select, drag-to-move, snap-to-mesh, Add Gear, Delete, live _rebuild_system(). 5 deferred (undo, belt, chain, duplicate)." },
     { sprint:"E04-S2", closed:"2026-05-23", itemsDone:5,  testsAdded:19, regression:"Pass", notes:"Defect simulation: missing/chipped tooth spur_gear_path(), GearItem.flash(), defect_at_contact(), AnimationController slip+callback. 3 items deferred." },

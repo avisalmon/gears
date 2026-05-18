@@ -9,7 +9,6 @@ from PyQt6.QtGui import QBrush, QColor, QFont, QPainter
 from PyQt6.QtWidgets import (
     QGraphicsScene,
     QGraphicsTextItem,
-    QGraphicsView,
     QLabel,
     QMainWindow,
     QPushButton,
@@ -28,15 +27,17 @@ class GearLabApp(QMainWindow):
         self.setWindowTitle("GearLab — Interactive Gear & Belt Simulator")
         self.resize(1280, 800)
 
+        from gearlab.canvas.view import GearView
         self._scene = QGraphicsScene(self)
-        self._canvas = QGraphicsView(self._scene, self)
-        self._canvas.setDragMode(QGraphicsView.DragMode.NoDrag)
+        self._canvas = GearView(self._scene, self)
+        self._canvas.setDragMode(GearView.DragMode.NoDrag)
         self._canvas.setTransformationAnchor(
-            QGraphicsView.ViewportAnchor.AnchorUnderMouse
+            GearView.ViewportAnchor.AnchorUnderMouse
         )
         self._canvas.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         self._canvas.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
         self.setCentralWidget(self._canvas)
+        self._canvas.zoom_changed.connect(self._update_status_bar)
 
         self._controller = None   # set by _setup_demo
         self._fit_rect   = None   # bounding rect to fit on first show
@@ -50,8 +51,10 @@ class GearLabApp(QMainWindow):
         self._setup_demo()
         self._setup_mode_bar()
         self._setup_toolbar()
+        self._setup_properties_panel()
         self._apply_mode_ui()
         self._scene.selectionChanged.connect(self._on_selection_changed)
+        self._update_status_bar()
 
     # ------------------------------------------------------------------
     # Demo scene — E03-S1
@@ -141,6 +144,7 @@ class GearLabApp(QMainWindow):
             self._controller.register(g.id, self._items[g.id])
         self._controller.set_defect_callback(self._on_defect_engaged)
         self._controller.start()
+        self._update_tooltips()
 
     # ------------------------------------------------------------------
     # Mode bar — E05-S1-01
@@ -184,16 +188,152 @@ class GearLabApp(QMainWindow):
 
     def _apply_mode_ui(self) -> None:
         """Show/hide controls according to the current mode."""
+        from gearlab.ui.mode import AppMode
         shows_edit = self._mode_ctrl.shows_edit_controls()
         self._btn_add_gear.setVisible(shows_edit)
         self._btn_delete.setVisible(shows_edit)
         self._tooth_spin.setVisible(shows_edit)
         self._lbl_teeth.setVisible(shows_edit)
+
+        # Properties panel: hidden in Presentation mode only
+        is_presentation = self._mode_ctrl.current == AppMode.PRESENTATION
+        if hasattr(self, "_prop_panel"):
+            self._prop_panel.setVisible(not is_presentation)
+            self._prop_panel.set_engineer_mode(shows_edit)
+
         self._update_gear_labels()
+        self._update_status_bar()
+
+    # ------------------------------------------------------------------
+    # Properties panel — E05-S2
+    # ------------------------------------------------------------------
+
+    def _setup_properties_panel(self) -> None:
+        from PyQt6.QtCore import Qt
+        from gearlab.ui.properties_panel import PropertiesPanel
+        self._prop_panel = PropertiesPanel(self)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self._prop_panel)
+        # Connect panel signals → app handlers
+        self._prop_panel.tooth_count_changed.connect(self._on_panel_tooth_count)
+        self._prop_panel.module_changed.connect(self._on_panel_module)
+        self._prop_panel.driver_toggled.connect(self._on_panel_driver_toggled)
+        self._prop_panel.driver_rpm_changed.connect(self._on_panel_driver_rpm)
+        self._prop_panel.defect_toggled.connect(self._on_panel_defect_toggled)
+
+    def _on_panel_tooth_count(self, v: int) -> None:
+        """Properties panel tooth count changed — same logic as toolbar spinbox."""
+        self._on_tooth_count_changed(v)
+
+    def _on_panel_module(self, v: float) -> None:
+        from gearlab.canvas.gear_item import GearItem
+        selected = [it for it in self._scene.selectedItems() if isinstance(it, GearItem)]
+        if len(selected) == 1:
+            gear = selected[0]._gear
+            if gear.module != v:
+                gear.module = v
+                selected[0]._rebuild_path()
+                self._rebuild_system()
+
+    def _on_panel_driver_toggled(self, is_driver: bool) -> None:
+        from gearlab.canvas.gear_item import GearItem
+        selected = [it for it in self._scene.selectedItems() if isinstance(it, GearItem)]
+        if len(selected) == 1:
+            selected[0]._gear.is_driver = is_driver
+            self._rebuild_system()
+
+    def _on_panel_driver_rpm(self, rpm: float) -> None:
+        from gearlab.canvas.gear_item import GearItem
+        selected = [it for it in self._scene.selectedItems() if isinstance(it, GearItem)]
+        if len(selected) == 1 and selected[0]._gear.is_driver:
+            selected[0]._gear.rpm = rpm
+            self._rebuild_system()
+
+    def _on_panel_defect_toggled(self, tooth_index: int, is_defective: bool) -> None:
+        from gearlab.canvas.gear_item import GearItem
+        from gearlab.models import DefectType, ToothDefect
+        selected = [it for it in self._scene.selectedItems() if isinstance(it, GearItem)]
+        if len(selected) != 1:
+            return
+        gear = selected[0]._gear
+        if is_defective:
+            if not any(d.tooth_index == tooth_index for d in gear.defects):
+                gear.defects.append(ToothDefect(tooth_index=tooth_index,
+                                                 defect_type=DefectType.MISSING))
+        else:
+            gear.defects = [d for d in gear.defects if d.tooth_index != tooth_index]
+        selected[0]._rebuild_path()
+
+    # ------------------------------------------------------------------
+    # Status bar — E05-S2-08
+    # ------------------------------------------------------------------
+
+    def _update_status_bar(self, _zoom: float | None = None) -> None:
+        """Refresh status bar: Mode | Ratio | Output RPM | Zoom."""
+        from gearlab.canvas.gear_item import GearItem
+        mode_name = self._mode_ctrl.current.value.title()
+        zoom_pct  = int(self._canvas.transform().m11() * 100)
+
+        # Find selected gear for ratio / RPM info
+        selected = [it for it in self._scene.selectedItems() if isinstance(it, GearItem)]
+        if selected:
+            gear = selected[0]._gear
+            rpm  = getattr(gear, "rpm", 0.0) or 0.0
+            rpm_text = f"{rpm:.0f} RPM"
+            # Ratio relative to driver
+            driver_rpm = next(
+                (g._gear.rpm for g in self._scene.items()
+                 if isinstance(g, GearItem) and g._gear.is_driver),
+                None,
+            )
+            if driver_rpm and rpm > 0:
+                ratio = driver_rpm / rpm
+                ratio_text = f"{ratio:.2f}:1"
+            else:
+                ratio_text = "—"
+        else:
+            ratio_text = "—"
+            rpm_text   = "—"
+
+        self.statusBar().showMessage(
+            f"Mode: {mode_name}  |  Ratio: {ratio_text}  |  Output: {rpm_text}  |  Zoom: {zoom_pct}%"
+        )
 
     # ------------------------------------------------------------------
     # Live gear info labels — E05-S1 demo
     # ------------------------------------------------------------------
+
+    def _update_tooltips(self) -> None:
+        """Set plain-language 'Why?' tooltips on every GearItem — E05-S2-09."""
+        from gearlab.canvas.gear_item import GearItem
+        from gearlab.models import Direction
+        items = [it for it in self._scene.items() if isinstance(it, GearItem)]
+        driver_gear = next((it._gear for it in items if it._gear.is_driver), None)
+
+        for item in items:
+            gear = item._gear
+            rpm  = getattr(gear, "rpm", 0.0) or 0.0
+            direction = getattr(gear, "_direction", None)
+            dir_text  = "clockwise (↻)" if direction == Direction.CW else "counter-clockwise (↺)"
+
+            if gear.is_driver:
+                tip = (
+                    f"Driver gear — {gear.tooth_count} teeth\n"
+                    f"Input: {rpm:.0f} RPM, spinning {dir_text}.\n"
+                    f"This gear drives the whole system."
+                )
+            elif driver_gear and rpm > 0 and driver_gear.rpm > 0:
+                ratio = driver_gear.rpm / rpm
+                tip = (
+                    f"{gear.tooth_count} teeth — {rpm:.0f} RPM, spinning {dir_text}.\n"
+                    f"Overall ratio from driver: {ratio:.2f}:1\n"
+                    f"Why? Ratio = driver teeth / this gear's teeth along the chain."
+                )
+            else:
+                tip = (
+                    f"{gear.tooth_count} teeth — not connected to the driver.\n"
+                    f"Drag it close to another gear to connect."
+                )
+            item.setToolTip(tip)
 
     def _update_gear_labels(self) -> None:
         """Create/refresh floating tooth-count + RPM labels for each gear."""
@@ -412,7 +552,9 @@ class GearLabApp(QMainWindow):
             if hasattr(self, "_conflict_label"):
                 self._conflict_label.setText("")
 
+        self._update_tooltips()
         self._update_gear_labels()
+        self._update_status_bar()
 
     # ------------------------------------------------------------------
     # Playback toolbar — E03-S1-04 / E03-S1-05
@@ -492,14 +634,31 @@ class GearLabApp(QMainWindow):
                 self._rebuild_system()
 
     def _on_selection_changed(self) -> None:
-        """Keep tooth spinbox in sync with the selected gear."""
+        """Keep toolbar spinbox and properties panel in sync with the selected gear."""
         from gearlab.canvas.gear_item import GearItem
         selected = [it for it in self._scene.selectedItems()
                     if isinstance(it, GearItem)]
         if len(selected) == 1:
+            gear = selected[0]._gear
             self._tooth_spin.blockSignals(True)
-            self._tooth_spin.setValue(selected[0]._gear.tooth_count)
+            self._tooth_spin.setValue(gear.tooth_count)
             self._tooth_spin.blockSignals(False)
+
+            # Populate properties panel
+            if hasattr(self, "_prop_panel"):
+                driver_rpm = next(
+                    (g._gear.rpm for g in self._scene.items()
+                     if isinstance(g, GearItem) and g._gear.is_driver),
+                    None,
+                )
+                rpm = getattr(gear, "rpm", 0.0) or 0.0
+                ratio = (driver_rpm / rpm) if (driver_rpm and rpm > 0) else None
+                self._prop_panel.populate(gear, ratio=ratio)
+        else:
+            if hasattr(self, "_prop_panel"):
+                self._prop_panel.clear()
+
+        self._update_status_bar()
 
     # ------------------------------------------------------------------
     # Toolbar callbacks

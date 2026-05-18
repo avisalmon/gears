@@ -271,18 +271,29 @@ class GearLabApp(QMainWindow):
             super().keyPressEvent(event)
 
     def _add_gear(self) -> None:
-        """Add a new gear at the viewport centre and select it."""
+        """Add a new gear below the existing gear cluster and select it."""
+        from gearlab.canvas.gear_geometry import addendum_radius
         from gearlab.canvas.gear_item import GearItem
         from gearlab.models import Gear, GearType
 
-        centre = self._canvas.mapToScene(
-            self._canvas.viewport().rect().center()
-        )
+        # Spawn below all current gear items so nothing overlaps
+        r_new = addendum_radius(self._new_tooth_count, 8.0)
+        existing = [it for it in self._scene.items() if isinstance(it, GearItem)]
+        if existing:
+            max_y = max(
+                it.pos().y() + addendum_radius(it._gear.tooth_count, it._gear.module)
+                for it in existing
+            )
+            spawn_x = sum(it.pos().x() for it in existing) / len(existing)
+            spawn_y = max_y + r_new + 40.0
+        else:
+            spawn_x, spawn_y = 0.0, 0.0
+
         gear = Gear(
             gear_type=GearType.SPUR,
             tooth_count=self._new_tooth_count,
             module=8.0,
-            position=(centre.x(), centre.y()),
+            position=(spawn_x, spawn_y),
         )
         item = GearItem(gear)
         item._snap_callback = self._try_snap

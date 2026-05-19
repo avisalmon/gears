@@ -43,7 +43,9 @@ class GearLabApp(QMainWindow):
         self._fit_rect   = None   # bounding rect to fit on first show
         self._new_tooth_count = 20  # default for Add Gear spinbox
         self._gear_label_items: list = []  # floating RPM/info labels
-        self._static_overlays:  list = []  # ratio badges + title (hidden in Presentation)
+        self._static_overlays:  list = []  # title text (hidden when badges hidden)
+        self._badge_overlays:   list = []  # dynamic ratio badges (E06-S1)
+        self._last_system = None            # most-recent solved GearSystem
 
         from gearlab.ui.mode import ModeController
         self._mode_ctrl = ModeController()
@@ -52,6 +54,7 @@ class GearLabApp(QMainWindow):
         self._setup_mode_bar()
         self._setup_toolbar()
         self._setup_properties_panel()
+        self._setup_formula_panel()
         self._apply_mode_ui()
         self._scene.selectionChanged.connect(self._on_selection_changed)
         self._update_status_bar()
@@ -62,7 +65,7 @@ class GearLabApp(QMainWindow):
 
     def _setup_demo(self) -> None:
         from gearlab.canvas.animation import AnimationController
-        from gearlab.canvas.gear_item import GearItem, add_ratio_badge
+        from gearlab.canvas.gear_item import GearItem
         from gearlab.engine.kinematics import solve
         from gearlab.models import (
             Connection, ConnectionType, DefectType, Direction,
@@ -111,17 +114,6 @@ class GearLabApp(QMainWindow):
             self._scene.addItem(item)
             self._items[g.id] = item
 
-        # Ratio badges
-        for conn in system.connections:
-            ga = next(x for x in system.elements if x.id == conn.element_a)
-            gb = next(x for x in system.elements if x.id == conn.element_b)
-            mx = (ga.position[0] + gb.position[0]) / 2
-            my = -(ga.tooth_count * M / 2) - 30
-            ratio = gb.tooth_count / ga.tooth_count
-            badge = (f"↓ {ratio:.0f}:1 reduction"
-                     if ratio >= 1 else f"↑ 1:{1/ratio:.0f} speedup")
-            self._static_overlays.append(add_ratio_badge(self._scene, mx, my, badge))
-
         # Title text
         title = QGraphicsTextItem(
             "E03  \u00b7  involute gears  \u00b7  scroll to zoom  \u00b7  drag to pan"
@@ -145,6 +137,7 @@ class GearLabApp(QMainWindow):
         self._controller.set_defect_callback(self._on_defect_engaged)
         self._controller.start()
         self._update_tooltips()
+        self._update_ratio_badges(system)
 
     # ------------------------------------------------------------------
     # Mode bar — E05-S1-01
@@ -201,6 +194,15 @@ class GearLabApp(QMainWindow):
             self._prop_panel.setVisible(not is_presentation)
             self._prop_panel.set_engineer_mode(shows_edit)
 
+        # Formula panel: shown in Student + Engineer only
+        if hasattr(self, "_formula_panel"):
+            shows_formula = self._mode_ctrl.shows_formula_panel()
+            self._formula_panel.setVisible(shows_formula)
+            if shows_formula:
+                self._formula_panel.set_mode(self._mode_ctrl.current)
+                if self._last_system is not None:
+                    self._formula_panel.update_for_system(self._last_system)
+
         self._update_gear_labels()
         self._update_status_bar()
 
@@ -219,6 +221,52 @@ class GearLabApp(QMainWindow):
         self._prop_panel.driver_toggled.connect(self._on_panel_driver_toggled)
         self._prop_panel.driver_rpm_changed.connect(self._on_panel_driver_rpm)
         self._prop_panel.defect_toggled.connect(self._on_panel_defect_toggled)
+
+    # ------------------------------------------------------------------
+    # Formula panel — E06-S1
+    # ------------------------------------------------------------------
+
+    def _setup_formula_panel(self) -> None:
+        from PyQt6.QtCore import Qt
+        from gearlab.ui.formula_panel import FormulaPanel
+        self._formula_panel = FormulaPanel(self)
+        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self._formula_panel)
+
+    def _update_ratio_badges(self, system) -> None:
+        """Rebuild dynamic ratio badges for every mesh connection in *system*."""
+        from gearlab.canvas.gear_geometry import pitch_radius
+        from gearlab.canvas.gear_item import add_ratio_badge
+
+        # Remove old badges from scene
+        for item in self._badge_overlays:
+            self._scene.removeItem(item)
+        self._badge_overlays.clear()
+
+        self._last_system = system
+        if system is None:
+            return
+
+        for conn in system.connections:
+            ga = next((x for x in system.elements if x.id == conn.element_a), None)
+            gb = next((x for x in system.elements if x.id == conn.element_b), None)
+            if ga is None or gb is None:
+                continue
+            mx = (ga.position[0] + gb.position[0]) / 2
+            r_a = pitch_radius(ga.tooth_count, ga.module)
+            my = (ga.position[1] + gb.position[1]) / 2 - r_a - 30
+            ratio = gb.tooth_count / ga.tooth_count
+            badge_text = (
+                f"\u2193 {ratio:.0f}:1 reduction"
+                if ratio >= 1
+                else f"\u2191 1:{1/ratio:.0f} speedup"
+            )
+            badge = add_ratio_badge(self._scene, mx, my, badge_text)
+            self._badge_overlays.append(badge)
+
+        # Apply current mode visibility
+        style = self._mode_ctrl.ratio_badge_style()
+        for item in self._badge_overlays:
+            item.setVisible(style != "hidden")
 
     def _on_panel_tooth_count(self, v: int) -> None:
         """Properties panel tooth count changed — same logic as toolbar spinbox."""
@@ -347,8 +395,10 @@ class GearLabApp(QMainWindow):
 
         style = self._mode_ctrl.ratio_badge_style()
 
-        # Always toggle static overlays (ratio badges + title)
+        # Toggle static overlays (title text) and dynamic badge overlays
         for item in self._static_overlays:
+            item.setVisible(style != "hidden")
+        for item in self._badge_overlays:
             item.setVisible(style != "hidden")
 
         if style == "hidden":
@@ -554,6 +604,10 @@ class GearLabApp(QMainWindow):
 
         self._update_tooltips()
         self._update_gear_labels()
+        self._update_ratio_badges(system)
+        if hasattr(self, "_formula_panel"):
+            self._formula_panel.set_mode(self._mode_ctrl.current)
+            self._formula_panel.update_for_system(system)
         self._update_status_bar()
 
     # ------------------------------------------------------------------

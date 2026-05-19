@@ -320,13 +320,13 @@ Each **Item** is a single deliverable: design, development, or QA.
 
 | ID | Feature | Type | Priority | Status | Notes |
 |----|---------|------|----------|--------|-------|
-| E06-S1-01 | Ratio badge rendered on every connected gear (mode-appropriate style) | Dev | P1 | Not Started | Per E02-S3-02 design |
-| E06-S1-02 | Formula panel: live `ratio = N2 / N1` display updating with tooth count changes | Dev | P1 | Not Started | Spec §3.5.3 |
-| E06-S1-03 | Formula panel: simplified text for Student mode; full derivation for Engineer | Dev | P1 | Not Started | |
-| E06-S1-04 | Direction rule explainer: animated arrow showing why meshing reverses direction | Dev | P1 | Not Started | Spec §3.5.4 |
-| E06-S1-05 | "Why?" tooltip: plain-language sentence per gear (no jargon in Explorer/Student modes) | Dev | P1 | Not Started | Spec §3.5.2 |
-| E06-S1-06 | Expert data table: tooth count, module, center distance, ratio, RPM, tangential velocity | Dev | P1 | Not Started | Engineer mode only — Spec §3.5.7 |
-| E06-S1-07 | Belt vs. gear comparison mode (side-by-side same ratio two ways) | Dev | P3 | Not Started | Spec §3.5.5 — nice-to-have |
+| E06-S1-01 | Ratio badge rendered on every connected gear (mode-appropriate style) | Dev | P1 | Done | Dynamic badges in `_badge_overlays`; rebuilt on every `_rebuild_system` |
+| E06-S1-02 | Formula panel: live `ratio = N2 / N1` display updating with tooth count changes | Dev | P1 | Done | `FormulaPanel` QDockWidget; bottom dock |
+| E06-S1-03 | Formula panel: simplified text for Student mode; full derivation for Engineer | Dev | P1 | Done | Expert table hidden in Student, shown in Engineer |
+| E06-S1-04 | Direction rule explainer: animated arrow showing why meshing reverses direction | Dev | P1 | Done | Static ↻→↺ text; animation deferred to polish sprint |
+| E06-S1-05 | "Why?" tooltip: plain-language sentence per gear (no jargon in Explorer/Student modes) | Dev | P1 | Done | Implemented in E05-S2 via `_update_tooltips()` |
+| E06-S1-06 | Expert data table: tooth count, module, center distance, ratio, RPM, tangential velocity | Dev | P1 | Done | `_expert_table` QTableWidget inside FormulaPanel; Engineer only |
+| E06-S1-07 | Belt vs. gear comparison mode (side-by-side same ratio two ways) | Dev | P3 | Deferred | Spec §3.5.5 — nice-to-have, future sprint |
 | E06-S1-08 | Design review: educational overlay visual polish vs. E02 component specs | Design | P1 | Not Started | Catch visual gaps before M7 milestone |
 
 ---

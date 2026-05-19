@@ -1,0 +1,61 @@
+{
+  "title": "Triple Reduction",
+  "description": "Reduce the speed to one-third using no more than 3 gears.",
+  "difficulty": "medium",
+  "initial_state": {
+    "elements": [
+      {
+        "id": "2da0c995-888f-428b-b5e6-07949a34ec4c",
+        "gear_type": "spur",
+        "tooth_count": 20,
+        "module": 8,
+        "position": [
+          0.0,
+          0.0
+        ],
+        "is_driver": true,
+        "rpm": 100.0,
+        "defects": []
+      },
+      {
+        "id": "e46e1894-3cfc-4abf-8cb4-ab1beca09321",
+        "gear_type": "spur",
+        "tooth_count": 20,
+        "module": 8,
+        "position": [
+          320.0,
+          0.0
+        ],
+        "is_driver": false,
+        "rpm": 0.0,
+        "defects": []
+      }
+    ],
+    "connections": [
+      {
+        "id": "328ae693-4198-4e70-9f6e-9672219a707e",
+        "conn_type": "mesh",
+        "element_a": "2da0c995-888f-428b-b5e6-07949a34ec4c",
+        "element_b": "e46e1894-3cfc-4abf-8cb4-ab1beca09321",
+        "crossed": false
+      }
+    ],
+    "driver_rpm": 100.0,
+    "driver_direction": "CW"
+  },
+  "goal": {
+    "target_ratio": 3.0,
+    "target_direction": null,
+    "max_gears": 3,
+    "tolerance": 0.05
+  },
+  "hints": [
+    "A 3:1 ratio means the driven gear has three times the teeth.",
+    "You can achieve this with just 2 gears.",
+    "Try 20 driver teeth and 60 driven teeth."
+  ],
+  "locked_element_ids": [
+    "2da0c995-888f-428b-b5e6-07949a34ec4c"
+  ],
+  "research": null
+}

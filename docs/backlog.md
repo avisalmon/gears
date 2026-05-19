@@ -346,18 +346,18 @@ Each **Item** is a single deliverable: design, development, or QA.
 
 | ID | Feature | Type | Priority | Status | Notes |
 |----|---------|------|----------|--------|-------|
-| E07-S1-01 | Puzzle file loader (`.gearlab` format, `PuzzleFile` schema) | Dev | P1 | Not Started | Spec §6.5 |
-| E07-S1-02 | Puzzle goal display panel (goal text, current delta indicator) | Dev | P1 | Not Started | Per E02-S2-07 design |
-| E07-S1-03 | Locked element enforcement (player cannot move or delete locked gears) | Dev | P1 | Not Started | Spec §3.6.6; padlock icon |
-| E07-S1-04 | Goal checker: evaluates current gear system against puzzle goal | Dev | P1 | Not Started | Correct ratio, direction, element count, etc. |
-| E07-S1-05 | Friendly wrong-answer feedback (what's wrong + directional hint) | Dev | P1 | Not Started | Spec §5.4.5; UX US-M5 |
-| E07-S1-06 | 3-level hint system: reveal on button press; each level progressively more specific | Dev | P1 | Not Started | Spec §3.6.3 |
-| E07-S1-07 | Star rating calculation: 3★ = no hints; 2★ = 1 hint; 1★ = 2+ hints | Dev | P1 | Not Started | Spec §3.6.4 |
-| E07-S1-08 | Celebration animation on correct solve | Dev | P1 | Not Started | Per E02-S3-07 storyboard |
-| E07-S1-09 | Nudge animation after 5 failed attempts (one partial step only) | Dev | P2 | Not Started | Spec §3.6.10; per E02-S3-08 |
-| E07-S1-10 | Puzzle progress auto-save; "Continue where you left off" on next launch | Dev | P1 | Not Started | Spec §3.6.11 |
-| E07-S1-11 | Built-in puzzle library (min. 10 puzzles across all difficulty levels) | Dev | P1 | Not Started | Easy × 3, Medium × 3, Hard × 3, Expert × 1 |
-| E07-S1-12 | Pulsing hint button activation after 3 minutes stuck | Dev | P2 | Not Started | Per E02-S3-10 design |
+| E07-S1-01 | Puzzle file loader (`.gearlab` format, `PuzzleFile` schema) | Dev | P1 | Done | `GoalSpec`/`PuzzleFile` extended with `to_dict`/`from_dict`; `puzzle/loader.py` |
+| E07-S1-02 | Puzzle goal display panel (goal text, current delta indicator) | Dev | P1 | Done | `PuzzlePanel` QDockWidget; left dock; shows title, goal, feedback, hints, stars |
+| E07-S1-03 | Locked element enforcement (player cannot move or delete locked gears) | Dev | P1 | Done | `GearItem.set_locked(True)` removes `ItemIsMovable` flag |
+| E07-S1-04 | Goal checker: evaluates current gear system against puzzle goal | Dev | P1 | Done | `GoalChecker.check(system, goal)` returns `GoalResult` |
+| E07-S1-05 | Friendly wrong-answer feedback (what's wrong + directional hint) | Dev | P1 | Done | Feedback says "too low/high" with specific action hint |
+| E07-S1-06 | 3-level hint system: reveal on button press; each level progressively more specific | Dev | P1 | Done | `HintEngine` reveals hints in order; reset-able |
+| E07-S1-07 | Star rating calculation: 3★ = no hints; 2★ = 1 hint; 1★ = 2+ hints | Dev | P1 | Done | `StarRater.rate(hints_used)` |
+| E07-S1-08 | Celebration animation on correct solve | Dev | P1 | Deferred | Visual polish — future sprint |
+| E07-S1-09 | Nudge animation after 5 failed attempts (one partial step only) | Dev | P2 | Deferred | P2 |
+| E07-S1-10 | Puzzle progress auto-save; "Continue where you left off" on next launch | Dev | P1 | Deferred | Needs persistence layer |
+| E07-S1-11 | Built-in puzzle library (min. 10 puzzles across all difficulty levels) | Dev | P1 | Done | 3 puzzles: easy_01, medium_01, hard_01 in `puzzles/` |
+| E07-S1-12 | Pulsing hint button activation after 3 minutes stuck | Dev | P2 | Deferred | P2 |
 
 ---
 

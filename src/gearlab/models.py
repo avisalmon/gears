@@ -163,9 +163,29 @@ class GearSystem:
 
 @dataclass
 class GoalSpec:
-    """Minimum goal descriptor — extended in E07 (Puzzle Engine)."""
-    target_ratio: Optional[float] = None
-    extra: dict = field(default_factory=dict)
+    """Goal descriptor for a puzzle challenge."""
+    target_ratio:     Optional[float]     = None
+    target_direction: Optional[Direction] = None
+    max_gears:        Optional[int]       = None
+    tolerance:        float               = 0.05   # fractional, e.g. 0.05 = 5 %
+
+    def to_dict(self) -> dict:
+        return {
+            "target_ratio":     self.target_ratio,
+            "target_direction": self.target_direction.value if self.target_direction else None,
+            "max_gears":        self.max_gears,
+            "tolerance":        self.tolerance,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "GoalSpec":
+        td = d.get("target_direction")
+        return cls(
+            target_ratio     = d.get("target_ratio"),
+            target_direction = Direction(td) if td else None,
+            max_gears        = d.get("max_gears"),
+            tolerance        = d.get("tolerance", 0.05),
+        )
 
 
 @dataclass
@@ -178,6 +198,31 @@ class PuzzleFile:
     hints:              list[str]
     locked_element_ids: list[uuid.UUID]
     research:           Optional[dict[str, Any]] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "title":              self.title,
+            "description":        self.description,
+            "difficulty":         self.difficulty.value,
+            "initial_state":      self.initial_state.to_dict(),
+            "goal":               self.goal.to_dict(),
+            "hints":              list(self.hints),
+            "locked_element_ids": [str(i) for i in self.locked_element_ids],
+            "research":           self.research,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "PuzzleFile":
+        return cls(
+            title              = d["title"],
+            description        = d.get("description", ""),
+            difficulty         = PuzzleDifficulty(d["difficulty"]),
+            initial_state      = GearSystem.from_dict(d["initial_state"]),
+            goal               = GoalSpec.from_dict(d.get("goal", {})),
+            hints              = list(d.get("hints", [])),
+            locked_element_ids = [uuid.UUID(x) for x in d.get("locked_element_ids", [])],
+            research           = d.get("research"),
+        )
 
 
 # ── §6.6  SessionLog + EventRecord ───────────────────────────────────────────

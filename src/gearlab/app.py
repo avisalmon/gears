@@ -55,6 +55,7 @@ class GearLabApp(QMainWindow):
         self._setup_toolbar()
         self._setup_properties_panel()
         self._setup_formula_panel()
+        self._setup_puzzle_panel()
         self._apply_mode_ui()
         self._scene.selectionChanged.connect(self._on_selection_changed)
         self._update_status_bar()
@@ -175,8 +176,11 @@ class GearLabApp(QMainWindow):
 
     def _set_mode(self, mode) -> None:
         """Switch application mode and update adaptive UI."""
+        from gearlab.ui.mode import AppMode
         self._mode_ctrl.set_mode(mode)
         self._mode_buttons[mode].setChecked(True)
+        if mode == AppMode.PUZZLE:
+            self._enter_puzzle_mode()
         self._apply_mode_ui()
 
     def _apply_mode_ui(self) -> None:
@@ -203,11 +207,105 @@ class GearLabApp(QMainWindow):
                 if self._last_system is not None:
                     self._formula_panel.update_for_system(self._last_system)
 
+        # Puzzle panel: shown in Puzzle mode only
+        if hasattr(self, "_puzzle_panel"):
+            is_puzzle = self._mode_ctrl.current == AppMode.PUZZLE
+            self._puzzle_panel.setVisible(is_puzzle)
+
         self._update_gear_labels()
         self._update_status_bar()
 
     # ------------------------------------------------------------------
-    # Properties panel — E05-S2
+    # Puzzle mode — E07-S1
+    # ------------------------------------------------------------------
+
+    def _enter_puzzle_mode(self) -> None:
+        """Open a file dialog to pick a .gearlab puzzle, then load it."""
+        from PyQt6.QtWidgets import QFileDialog
+        from gearlab.puzzle.loader import load_puzzle
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Open Puzzle", "", "GearLab Puzzles (*.gearlab);;All Files (*)"
+        )
+        if not path:
+            return
+        try:
+            puzzle = load_puzzle(path)
+        except (FileNotFoundError, ValueError) as exc:
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "Load Error", str(exc))
+            return
+        self._load_puzzle(puzzle)
+
+    def _load_puzzle(self, puzzle) -> None:
+        """Populate canvas and panel from a PuzzleFile."""
+        from gearlab.canvas.gear_item import GearItem
+        from gearlab.canvas.animation import AnimationController
+        from gearlab.engine.kinematics import solve
+        from gearlab.puzzle.engine import HintEngine
+
+        # Stop existing animation
+        if self._controller is not None:
+            self._controller.pause()
+
+        # Clear canvas
+        self._scene.clear()
+        self._items = {}
+        self._badge_overlays = []
+        self._gear_label_items = []
+        self._static_overlays = []
+
+        system = solve(puzzle.initial_state)
+        locked_ids = set(puzzle.locked_element_ids)
+
+        import math
+        gears = system.elements
+        offsets = {g.id: 0.0 for g in gears}
+
+        for g in gears:
+            direction = getattr(g, "_direction", None)
+            item = GearItem(g)
+            item.set_direction(direction)
+            item.set_angle(offsets[g.id] * 180.0 / math.pi)
+            item._snap_callback = self._try_snap
+            if g.id in locked_ids:
+                item.set_locked(True)
+            self._scene.addItem(item)
+            self._items[g.id] = item
+
+        self._controller = AnimationController(system)
+        for g in system.elements:
+            self._controller.register(g.id, self._items[g.id])
+        self._controller.set_defect_callback(self._on_defect_engaged)
+        self._controller.start()
+
+        self._active_puzzle = puzzle
+        self._hint_engine = HintEngine(puzzle.hints)
+        self._puzzle_panel.load_puzzle(puzzle)
+        self._update_ratio_badges(system)
+        self._update_status_bar()
+
+    def _on_puzzle_check(self) -> None:
+        """Check the current system against the active puzzle goal."""
+        if self._active_puzzle is None or self._last_system is None:
+            return
+        from gearlab.engine.kinematics import solve
+        from gearlab.puzzle.engine import GoalChecker, StarRater
+        system = solve(self._last_system)
+        result = GoalChecker().check(system, self._active_puzzle.goal)
+        self._puzzle_panel.show_result(result)
+        if result.solved:
+            hints_used = self._hint_engine.hints_used if self._hint_engine else 0
+            stars = StarRater().rate(hints_used)
+            self._puzzle_panel.show_stars(stars)
+
+    def _on_puzzle_hint(self) -> None:
+        """Reveal the next hint for the active puzzle."""
+        if self._hint_engine is None:
+            return
+        hint = self._hint_engine.reveal_next()
+        if hint is not None:
+            self._puzzle_panel.show_hint(hint, self._hint_engine.hints_used)
+
     # ------------------------------------------------------------------
 
     def _setup_properties_panel(self) -> None:
@@ -231,6 +329,17 @@ class GearLabApp(QMainWindow):
         from gearlab.ui.formula_panel import FormulaPanel
         self._formula_panel = FormulaPanel(self)
         self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self._formula_panel)
+
+    def _setup_puzzle_panel(self) -> None:
+        from PyQt6.QtCore import Qt
+        from gearlab.ui.puzzle_panel import PuzzlePanel
+        self._puzzle_panel = PuzzlePanel(self)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self._puzzle_panel)
+        self._puzzle_panel.setVisible(False)
+        self._puzzle_panel.check_requested.connect(self._on_puzzle_check)
+        self._puzzle_panel.hint_requested.connect(self._on_puzzle_hint)
+        self._hint_engine = None
+        self._active_puzzle = None
 
     def _update_ratio_badges(self, system) -> None:
         """Rebuild dynamic ratio badges for every mesh connection in *system*."""
@@ -286,6 +395,11 @@ class GearLabApp(QMainWindow):
         from gearlab.canvas.gear_item import GearItem
         selected = [it for it in self._scene.selectedItems() if isinstance(it, GearItem)]
         if len(selected) == 1:
+            if is_driver:
+                # Only one driver allowed — clear all others first
+                for item in self._scene.items():
+                    if isinstance(item, GearItem) and item is not selected[0]:
+                        item._gear.is_driver = False
             selected[0]._gear.is_driver = is_driver
             self._rebuild_system()
 

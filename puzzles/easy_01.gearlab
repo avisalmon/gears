@@ -1,0 +1,61 @@
+{
+  "title": "Double Down",
+  "description": "Make the output gear spin at half the speed of the driver.",
+  "difficulty": "easy",
+  "initial_state": {
+    "elements": [
+      {
+        "id": "649d34a0-3286-4ee5-a5f1-a63d75d49aff",
+        "gear_type": "spur",
+        "tooth_count": 20,
+        "module": 8,
+        "position": [
+          0.0,
+          0.0
+        ],
+        "is_driver": true,
+        "rpm": 100.0,
+        "defects": []
+      },
+      {
+        "id": "189dda83-0be7-47fc-86c7-2d312c0f7039",
+        "gear_type": "spur",
+        "tooth_count": 20,
+        "module": 8,
+        "position": [
+          320.0,
+          0.0
+        ],
+        "is_driver": false,
+        "rpm": 0.0,
+        "defects": []
+      }
+    ],
+    "connections": [
+      {
+        "id": "c4d9e86b-af95-43b9-8e56-bd4a2c0d5ba6",
+        "conn_type": "mesh",
+        "element_a": "649d34a0-3286-4ee5-a5f1-a63d75d49aff",
+        "element_b": "189dda83-0be7-47fc-86c7-2d312c0f7039",
+        "crossed": false
+      }
+    ],
+    "driver_rpm": 100.0,
+    "driver_direction": "CW"
+  },
+  "goal": {
+    "target_ratio": 2.0,
+    "target_direction": null,
+    "max_gears": null,
+    "tolerance": 0.05
+  },
+  "hints": [
+    "The ratio equals driven teeth divided by driver teeth.",
+    "You need the output gear to have twice the teeth of the driver.",
+    "Try 20 driver teeth and 40 driven teeth."
+  ],
+  "locked_element_ids": [
+    "649d34a0-3286-4ee5-a5f1-a63d75d49aff"
+  ],
+  "research": null
+}

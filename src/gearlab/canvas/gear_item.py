@@ -57,6 +57,7 @@ class GearItem(QGraphicsItem):
         self._gear          = gear
         self._color         = _UNK_COLOR
         self._flashing      = False
+        self._locked        = False
         self._snap_callback = None   # set by app for snap-to-mesh
         self._rebuild_path()
         self.setPos(gear.position[0], gear.position[1])
@@ -93,6 +94,21 @@ class GearItem(QGraphicsItem):
         else:
             self._color = _UNK_COLOR
         self.update()
+
+    def set_locked(self, locked: bool) -> None:
+        """Lock or unlock this item. Locked items cannot be moved or deleted."""
+        self._locked = locked
+        flags = self.flags()
+        if locked:
+            flags &= ~QGraphicsItem.GraphicsItemFlag.ItemIsMovable
+        else:
+            flags |= QGraphicsItem.GraphicsItemFlag.ItemIsMovable
+        self.setFlags(flags)
+        self.update()
+
+    def is_locked(self) -> bool:
+        """Return True if this item is currently locked."""
+        return self._locked
 
     def flash(self, duration_ms: int = 250) -> None:
         """Brief bright flash to signal a defect engagement event (E04-S2-05)."""

@@ -1,0 +1,61 @@
+{
+  "title": "Quarter Speed, Reversed",
+  "description": "Reduce speed to a quarter AND make the output spin counter-clockwise.",
+  "difficulty": "hard",
+  "initial_state": {
+    "elements": [
+      {
+        "id": "02a0456d-7527-4bd1-9cd9-e319dc82d851",
+        "gear_type": "spur",
+        "tooth_count": 20,
+        "module": 8,
+        "position": [
+          0.0,
+          0.0
+        ],
+        "is_driver": true,
+        "rpm": 100.0,
+        "defects": []
+      },
+      {
+        "id": "f5b96cdb-0394-4be5-8a57-667ae5875382",
+        "gear_type": "spur",
+        "tooth_count": 20,
+        "module": 8,
+        "position": [
+          320.0,
+          0.0
+        ],
+        "is_driver": false,
+        "rpm": 0.0,
+        "defects": []
+      }
+    ],
+    "connections": [
+      {
+        "id": "93aeb088-51a4-4978-9f34-daa22f5b1fd4",
+        "conn_type": "mesh",
+        "element_a": "02a0456d-7527-4bd1-9cd9-e319dc82d851",
+        "element_b": "f5b96cdb-0394-4be5-8a57-667ae5875382",
+        "crossed": false
+      }
+    ],
+    "driver_rpm": 100.0,
+    "driver_direction": "CW"
+  },
+  "goal": {
+    "target_ratio": 4.0,
+    "target_direction": "CCW",
+    "max_gears": null,
+    "tolerance": 0.05
+  },
+  "hints": [
+    "External gears always reverse direction \u2014 that part is free.",
+    "You need a 4:1 tooth ratio between driver and driven.",
+    "Try 20 driver teeth and 80 driven teeth \u2014 external mesh reverses direction automatically."
+  ],
+  "locked_element_ids": [
+    "02a0456d-7527-4bd1-9cd9-e319dc82d851"
+  ],
+  "research": null
+}

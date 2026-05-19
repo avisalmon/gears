@@ -36,6 +36,10 @@ class FormulaPanel(QDockWidget):
 
         # ----- inner widget -------------------------------------------------
         inner = QWidget()
+        inner.setStyleSheet(
+            "QWidget { background:#1e2030; }"
+            "QLabel  { color:#cdd6f4; }"
+        )
         layout = QVBoxLayout(inner)
         layout.setContentsMargins(8, 6, 8, 6)
         layout.setSpacing(4)
@@ -44,7 +48,9 @@ class FormulaPanel(QDockWidget):
         self._formula_label = QLabel()
         self._formula_label.setWordWrap(True)
         self._formula_label.setTextFormat(Qt.TextFormat.PlainText)
-        self._formula_label.setStyleSheet("color:#cdd6f4; font-size:12px;")
+        self._formula_label.setStyleSheet(
+            "color:#cdd6f4; font-size:13px; font-weight:600;"
+        )
         self._formula_label.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
         )
@@ -55,7 +61,7 @@ class FormulaPanel(QDockWidget):
             "\u21bb Driver \u2192 \u21ba Driven  |  External mesh reverses direction."
         )
         self._dir_label.setWordWrap(True)
-        self._dir_label.setStyleSheet("color:#a6e3a1; font-size:11px;")
+        self._dir_label.setStyleSheet("color:#a6e3a1; font-size:12px;")
         layout.addWidget(self._dir_label)
 
         # expert table (Engineer mode only) ---------------------------------

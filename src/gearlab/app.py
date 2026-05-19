@@ -241,6 +241,7 @@ class GearLabApp(QMainWindow):
         from gearlab.canvas.gear_item import GearItem
         from gearlab.canvas.animation import AnimationController
         from gearlab.engine.kinematics import solve
+        from gearlab.models import GearSystem
         from gearlab.puzzle.engine import HintEngine
 
         # Stop existing animation
@@ -254,7 +255,16 @@ class GearLabApp(QMainWindow):
         self._gear_label_items = []
         self._static_overlays = []
 
-        system = solve(puzzle.initial_state)
+        # Start with NO connections — only the driver spins at launch.
+        # The player snaps free gears into mesh to form connections.
+        initial = puzzle.initial_state
+        start_system = GearSystem(
+            elements=initial.elements,
+            connections=[],
+            driver_rpm=initial.driver_rpm,
+            driver_direction=initial.driver_direction,
+        )
+        system = solve(start_system)
         locked_ids = set(puzzle.locked_element_ids)
 
         import math

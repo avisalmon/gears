@@ -102,16 +102,24 @@ class PuzzlePanel(QDockWidget):
         """Populate the panel from a PuzzleFile."""
         self._title_label.setText(puzzle.title)
         goal = puzzle.goal
-        parts = []
+
+        # Always show human-readable description first
+        lines = []
+        if puzzle.description:
+            lines.append(puzzle.description)
+            lines.append("")  # blank separator
+
+        # Then the measurable goal specs
         if goal.target_ratio is not None:
-            parts.append(f"Target ratio: {goal.target_ratio:.2f}")
+            lines.append(f"🎯 Target ratio: {goal.target_ratio:.2f}")
         if goal.target_direction is not None:
-            parts.append(f"Output direction: {goal.target_direction.value}")
+            lines.append(f"🔄 Output direction: {goal.target_direction.value}")
         if goal.max_gears is not None:
-            parts.append(f"Max gears: {goal.max_gears}")
-        if not parts:
-            parts.append(puzzle.description or "Connect the gears to meet the goal.")
-        self._goal_label.setText("\n".join(parts))
+            lines.append(f"⚙ Max gears: {goal.max_gears}")
+        if not lines:
+            lines.append("Connect the gears to meet the goal.")
+
+        self._goal_label.setText("\n".join(lines))
         self._feedback_label.setText("")
         self._hint_label.setVisible(False)
         self._star_label.setVisible(False)

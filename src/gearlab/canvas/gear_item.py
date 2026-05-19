@@ -73,6 +73,7 @@ class GearItem(QGraphicsItem):
 
     def _rebuild_path(self) -> None:
         """Compute the gear path, applying any defects from gear.defects."""
+        self.prepareGeometryChange()
         defect_map = (
             {d.tooth_index: d.defect_type for d in self._gear.defects}
             if self._gear.defects else None
@@ -80,6 +81,7 @@ class GearItem(QGraphicsItem):
         self._path = spur_gear_path(
             self._gear.tooth_count, self._gear.module, defect_map=defect_map
         )
+        self.update()
 
     def set_angle(self, degrees: float) -> None:
         """Set absolute rotation in degrees (positive = CW in Qt coords)."""
@@ -130,9 +132,14 @@ class GearItem(QGraphicsItem):
             self._snap_callback(self)
 
     def boundingRect(self) -> QRectF:
-        r_a  = addendum_radius(self._gear.tooth_count, self._gear.module)
-        side = r_a + max(self._gear.module, 10.0)   # room for highlight ring
-        return QRectF(-side, -side, side * 2.0, side * 2.0)
+        r_a    = addendum_radius(self._gear.tooth_count, self._gear.module)
+        ring   = max(self._gear.module, 10.0)  # highlight ring margin
+        top    = -(r_a + ring)
+        left   = -(r_a + ring)
+        width  = (r_a + ring) * 2.0
+        # Label is drawn at y = r_a + 18 with ~14px font; add 36px margin
+        bottom = r_a + 36.0
+        return QRectF(left, top, width, bottom - top)
 
     def paint(
         self,

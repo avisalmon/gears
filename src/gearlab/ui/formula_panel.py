@@ -32,7 +32,8 @@ class FormulaPanel(QDockWidget):
         self.setMinimumWidth(220)
         self.setMaximumHeight(260)
 
-        self._mode = "student"   # "student" | "engineer" | "explorer"
+        self._mode = "student"   # "student" | "engineer" | "explorer" | "presentation"
+        self._formula_font_size = 13  # px — normal size; enlarged in presentation
 
         # ----- inner widget -------------------------------------------------
         inner = QWidget()
@@ -101,7 +102,7 @@ class FormulaPanel(QDockWidget):
     def set_mode(self, mode) -> None:
         """
         Accept AppMode enum or plain string.
-        Shows expert table only in Engineer mode.
+        Shows expert table only in Engineer mode; enlarges font in Presentation.
         """
         from gearlab.ui.mode import AppMode
         if isinstance(mode, AppMode):
@@ -110,8 +111,19 @@ class FormulaPanel(QDockWidget):
             mode_str = str(mode).lower()
         self._mode = mode_str
         is_engineer = "engineer" in mode_str
+        is_presentation = "presentation" in mode_str
         self._expert_table.setVisible(is_engineer)
         self._expert_table_scroll.setVisible(is_engineer)
+        # Enlarge formula text in Presentation mode
+        font_size = 18 if is_presentation else 13
+        self._formula_font_size = font_size
+        self._formula_label.setStyleSheet(
+            f"color:#cdd6f4; font-size:{font_size}px; font-weight:600;"
+        )
+
+    def get_font_size(self) -> int:
+        """Return the current formula label font size in px."""
+        return self._formula_font_size
 
     def update_for_system(self, system) -> None:
         """Refresh formula text and (Engineer) expert table from a solved system."""

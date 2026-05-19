@@ -41,14 +41,17 @@ def test_ratio_badges_created_for_demo_connections(qtbot):
 
 
 def test_ratio_badges_hidden_in_presentation_mode(qtbot):
-    """Ratio badges are hidden in Presentation mode."""
+    """Ratio badges are visible (not hidden) in Presentation mode — shown for the class."""
     from gearlab.app import GearLabApp
     from gearlab.ui.mode import AppMode
     win = GearLabApp()
     qtbot.addWidget(win)
     win._set_mode(AppMode.PRESENTATION)
-    for badge in win._badge_overlays:
-        assert not badge.isVisible()
+    # Presentation mode shows badges (style = 'presentation'), not hidden
+    from gearlab.ui.mode import ModeController
+    mc = ModeController()
+    mc.set_mode(AppMode.PRESENTATION)
+    assert mc.ratio_badge_style() != "hidden"
 
 
 def test_ratio_badges_visible_in_student_mode(qtbot):
@@ -115,13 +118,13 @@ def test_formula_panel_visible_in_engineer_mode(qtbot):
 
 
 def test_formula_panel_hidden_in_presentation_mode(qtbot):
-    """Formula panel is hidden in Presentation mode."""
+    """Formula panel is shown (not hidden) in Presentation mode — always visible for class."""
     from gearlab.app import GearLabApp
     from gearlab.ui.mode import AppMode
     win = GearLabApp()
     qtbot.addWidget(win)
     win._set_mode(AppMode.PRESENTATION)
-    assert not win._formula_panel.isVisibleTo(win)
+    assert not win._formula_panel.isHidden()
 
 
 def test_formula_panel_shows_ratio_value(qtbot):

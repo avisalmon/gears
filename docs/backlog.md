@@ -367,16 +367,16 @@ Each **Item** is a single deliverable: design, development, or QA.
 
 | ID | Feature | Type | Priority | Status | Notes |
 |----|---------|------|----------|--------|-------|
-| E07-S2-01 | Puzzle editor UI (canvas + goal + hints + lock/unlock controls) | Dev | P1 | Not Started | Per E02-S2-08 design |
-| E07-S2-02 | Guided "first puzzle" template (pre-filled structure, step-by-step prompts) | Dev | P1 | Not Started | Spec §3.6.8; UX US-D1 |
-| E07-S2-03 | Goal definition UI (choose target: ratio / RPM / direction / element count) | Dev | P1 | Not Started | |
-| E07-S2-04 | Per-element lock / unlock toggle with padlock icon | Dev | P1 | Not Started | Spec §3.6.6 |
-| E07-S2-05 | Hint text authoring: 3 separate editable fields (Hint 1 / 2 / 3) | Dev | P1 | Not Started | Spec §3.6.7; UX UQ7 |
+| E07-S2-01 | Puzzle editor UI (canvas + goal + hints + lock/unlock controls) | Dev | P1 | Done | Per E02-S2-08 design |
+| E07-S2-02 | Guided "first puzzle" template (pre-filled structure, step-by-step prompts) | Dev | P1 | Done | Spec §3.6.8; UX US-D1 |
+| E07-S2-03 | Goal definition UI (choose target: ratio / RPM / direction / element count) | Dev | P1 | Done | |
+| E07-S2-04 | Per-element lock / unlock toggle with padlock icon | Dev | P1 | Done | Spec §3.6.6 |
+| E07-S2-05 | Hint text authoring: 3 separate editable fields (Hint 1 / 2 / 3) | Dev | P1 | Done | Spec §3.6.7; UX UQ7 |
 | E07-S2-06 | Researcher metadata fields (expected_difficulty, domain_prior, spatial_type) | Dev | P2 | Not Started | Spec §6.5; for Dr. Lena |
-| E07-S2-07 | Duplicate & modify existing puzzle | Dev | P1 | Not Started | Spec §3.6.9 |
-| E07-S2-08 | Test-play a puzzle from within the editor before saving | Dev | P1 | Not Started | UX US-D1 acceptance criteria |
-| E07-S2-09 | Save puzzle as portable `.gearlab` file | Dev | P1 | Not Started | Opens on any GearLab install — UX US-D5 |
-| E07-S2-10 | QA: full puzzle authoring flow end-to-end (author → save → share → open → solve) | QA | P1 | Not Started | |
+| E07-S2-07 | Duplicate & modify existing puzzle | Dev | P1 | Done | Spec §3.6.9 |
+| E07-S2-08 | Test-play a puzzle from within the editor before saving | Dev | P1 | Done | UX US-D1 acceptance criteria |
+| E07-S2-09 | Save puzzle as portable `.gearlab` file | Dev | P1 | Done | Opens on any GearLab install — UX US-D5 |
+| E07-S2-10 | QA: full puzzle authoring flow end-to-end (author → save → share → open → solve) | QA | P1 | Done | |
 
 ---
 
@@ -395,13 +395,13 @@ Each **Item** is a single deliverable: design, development, or QA.
 
 | ID | Feature | Type | Priority | Status | Notes |
 |----|---------|------|----------|--------|-------|
-| E08-S1-01 | F11 / menu toggle: enter / exit Presentation mode | Dev | P1 | Not Started | Spec §4.5 |
-| E08-S1-02 | Presentation mode layout: toolbox hidden, properties panel hidden | Dev | P1 | Not Started | Per E02-S2-06 design |
-| E08-S1-03 | Formula panel enlarged and always visible in Presentation mode | Dev | P1 | Not Started | Spec §4.5; UX US-D4 |
-| E08-S1-04 | Direction arrows enlarged in Presentation mode | Dev | P1 | Not Started | UX §7 |
-| E08-S1-05 | Teacher can still edit canvas (add/connect/modify gears) while in Presentation mode | Dev | P1 | Not Started | UX US-D4 |
+| E08-S1-01 | F11 / menu toggle: enter / exit Presentation mode | Dev | P1 | Done | Spec §4.5 |
+| E08-S1-02 | Presentation mode layout: toolbox hidden, properties panel hidden | Dev | P1 | Done | Per E02-S2-06 design |
+| E08-S1-03 | Formula panel enlarged and always visible in Presentation mode | Dev | P1 | Done | Spec §4.5; UX US-D4 |
+| E08-S1-04 | Direction arrows enlarged in Presentation mode | Dev | P1 | Done | UX §7 |
+| E08-S1-05 | Teacher can still edit canvas (add/connect/modify gears) while in Presentation mode | Dev | P1 | Done | UX US-D4 |
 | E08-S1-06 | Annotation / freehand draw overlay (teacher draws on canvas live) | Dev | P2 | Not Started | Spec §4.5; UX UQ9 — freehand only in v1 |
-| E08-S1-07 | Esc key or F11 restores prior layout instantly | Dev | P1 | Not Started | |
+| E08-S1-07 | Esc key or F11 restores prior layout instantly | Dev | P1 | Done | |
 | E08-S1-08 | Design review: Presentation mode visual polish | Design | P1 | Not Started | |
 
 ---

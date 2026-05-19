@@ -82,7 +82,7 @@ def test_ratio_badge_style_per_mode():
     mc.set_mode(AppMode.EXPLORER)
     assert mc.ratio_badge_style() == "minimal"
     mc.set_mode(AppMode.PRESENTATION)
-    assert mc.ratio_badge_style() == "hidden"
+    assert mc.ratio_badge_style() == "presentation"
 
 
 # ---------------------------------------------------------------------------

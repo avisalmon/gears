@@ -46,6 +46,8 @@ class GearLabApp(QMainWindow):
         self._static_overlays:  list = []  # title text (hidden when badges hidden)
         self._badge_overlays:   list = []  # dynamic ratio badges (E06-S1)
         self._last_system = None            # most-recent solved GearSystem
+        self._in_presentation = False       # E08-S1
+        self._pre_presentation_mode = None  # mode to restore after Presentation
 
         from gearlab.ui.mode import ModeController
         self._mode_ctrl = ModeController()
@@ -56,6 +58,7 @@ class GearLabApp(QMainWindow):
         self._setup_properties_panel()
         self._setup_formula_panel()
         self._setup_puzzle_panel()
+        self._setup_menu_bar()
         self._apply_mode_ui()
         self._scene.selectionChanged.connect(self._on_selection_changed)
         self._update_status_bar()
@@ -181,7 +184,46 @@ class GearLabApp(QMainWindow):
         self._mode_buttons[mode].setChecked(True)
         if mode == AppMode.PUZZLE:
             self._enter_puzzle_mode()
+        if mode == AppMode.PRESENTATION:
+            self.enter_presentation_mode()
+        else:
+            # Entering any non-presentation mode while in presentation → restore
+            if getattr(self, "_in_presentation", False):
+                self._restore_from_presentation()
         self._apply_mode_ui()
+
+    def enter_presentation_mode(self) -> None:
+        """Enter Presentation mode: hide toolbars, enlarge formula panel."""
+        from gearlab.ui.mode import AppMode
+        if not getattr(self, "_in_presentation", False):
+            self._pre_presentation_mode = self._mode_ctrl.current
+        self._in_presentation = True
+        self._mode_ctrl.set_mode(AppMode.PRESENTATION)
+        if AppMode.PRESENTATION in self._mode_buttons:
+            self._mode_buttons[AppMode.PRESENTATION].setChecked(True)
+        if hasattr(self, "_main_toolbar"):
+            self._main_toolbar.hide()
+        if hasattr(self, "_prop_panel"):
+            self._prop_panel.hide()
+        self._apply_mode_ui()
+
+    def exit_presentation_mode(self) -> None:
+        """Exit Presentation mode and restore prior state."""
+        self._restore_from_presentation()
+        self._apply_mode_ui()
+
+    def _restore_from_presentation(self) -> None:
+        """Internal: undo presentation-mode changes."""
+        from gearlab.ui.mode import AppMode
+        self._in_presentation = False
+        prev = getattr(self, "_pre_presentation_mode", AppMode.EXPLORER)
+        self._mode_ctrl.set_mode(prev)
+        if prev in self._mode_buttons:
+            self._mode_buttons[prev].setChecked(True)
+        if hasattr(self, "_main_toolbar"):
+            self._main_toolbar.show()
+        if hasattr(self, "_prop_panel"):
+            self._prop_panel.show()
 
     def _apply_mode_ui(self) -> None:
         """Show/hide controls according to the current mode."""
@@ -192,20 +234,20 @@ class GearLabApp(QMainWindow):
         self._tooth_spin.setVisible(shows_edit)
         self._lbl_teeth.setVisible(shows_edit)
 
-        # Properties panel: hidden in Presentation mode only
         is_presentation = self._mode_ctrl.current == AppMode.PRESENTATION
-        if hasattr(self, "_prop_panel"):
-            self._prop_panel.setVisible(not is_presentation)
+        # Properties panel: hide in Presentation; let enter/exit_presentation handle it
+        if hasattr(self, "_prop_panel") and not is_presentation:
+            self._prop_panel.show()
             self._prop_panel.set_engineer_mode(shows_edit)
 
-        # Formula panel: shown in Student + Engineer only
+        # Formula panel: shown in Student + Engineer + Presentation
         if hasattr(self, "_formula_panel"):
             shows_formula = self._mode_ctrl.shows_formula_panel()
             self._formula_panel.setVisible(shows_formula)
-            if shows_formula:
-                self._formula_panel.set_mode(self._mode_ctrl.current)
-                if self._last_system is not None:
-                    self._formula_panel.update_for_system(self._last_system)
+            # Always update mode so font/style resets correctly (e.g. exiting Presentation)
+            self._formula_panel.set_mode(self._mode_ctrl.current)
+            if shows_formula and self._last_system is not None:
+                self._formula_panel.update_for_system(self._last_system)
 
         # Puzzle panel: shown in Puzzle mode only
         if hasattr(self, "_puzzle_panel"):
@@ -350,6 +392,87 @@ class GearLabApp(QMainWindow):
         self._puzzle_panel.hint_requested.connect(self._on_puzzle_hint)
         self._hint_engine = None
         self._active_puzzle = None
+
+    def _setup_menu_bar(self) -> None:
+        """Create the application menu bar — E07-S2."""
+        from PyQt6.QtGui import QAction
+        mb = self.menuBar()
+
+        file_menu = mb.addMenu("&File")
+
+        act_new = QAction("New Puzzle…", self)
+        act_new.setShortcut("Ctrl+N")
+        act_new.triggered.connect(self._new_puzzle_editor)
+        file_menu.addAction(act_new)
+
+        act_edit = QAction("Edit / Duplicate Puzzle…", self)
+        act_edit.setShortcut("Ctrl+E")
+        act_edit.triggered.connect(self._edit_puzzle_editor)
+        file_menu.addAction(act_edit)
+
+        view_menu = mb.addMenu("&View")
+        act_pres = QAction("Presentation Mode\tF11", self)
+        act_pres.setShortcut("F11")
+        act_pres.triggered.connect(self._toggle_presentation_mode)
+        view_menu.addAction(act_pres)
+
+    def _toggle_presentation_mode(self) -> None:
+        """F11 toggles Presentation mode on/off."""
+        if getattr(self, "_in_presentation", False):
+            self.exit_presentation_mode()
+        else:
+            self.enter_presentation_mode()
+
+    def _new_puzzle_editor(self) -> None:
+        """Open the Puzzle Editor with a blank template."""
+        from gearlab.ui.puzzle_editor import PuzzleEditorDialog
+        dlg = PuzzleEditorDialog(self)
+        dlg.new_puzzle()
+        if dlg.exec():
+            try:
+                self._save_puzzle_from_editor(dlg)
+            except ValueError as exc:
+                from PyQt6.QtWidgets import QMessageBox
+                QMessageBox.warning(self, "Puzzle Error", str(exc))
+
+    def _edit_puzzle_editor(self) -> None:
+        """Open the Puzzle Editor pre-filled with the active puzzle (or file picker)."""
+        from PyQt6.QtWidgets import QFileDialog, QMessageBox
+        from gearlab.puzzle.loader import load_puzzle
+        from gearlab.ui.puzzle_editor import PuzzleEditorDialog
+
+        if self._active_puzzle is not None:
+            pf = self._active_puzzle
+        else:
+            path, _ = QFileDialog.getOpenFileName(
+                self, "Open Puzzle to Edit", "",
+                "GearLab Puzzles (*.gearlab);;All Files (*)"
+            )
+            if not path:
+                return
+            try:
+                pf = load_puzzle(path)
+            except (FileNotFoundError, ValueError) as exc:
+                QMessageBox.warning(self, "Load Error", str(exc))
+                return
+
+        dlg = PuzzleEditorDialog(self)
+        dlg.load_puzzle_file(pf)
+        if dlg.exec():
+            try:
+                self._save_puzzle_from_editor(dlg)
+            except ValueError as exc:
+                QMessageBox.warning(self, "Puzzle Error", str(exc))
+
+    def _save_puzzle_from_editor(self, dlg) -> None:
+        """Show a save dialog and write the puzzle file."""
+        from PyQt6.QtWidgets import QFileDialog
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Save Puzzle", "",
+            "GearLab Puzzles (*.gearlab);;All Files (*)"
+        )
+        if path:
+            dlg.save_to_path(path)
 
     def _update_ratio_badges(self, system) -> None:
         """Rebuild dynamic ratio badges for every mesh connection in *system*."""
@@ -580,7 +703,12 @@ class GearLabApp(QMainWindow):
         if event.key() == Qt.Key.Key_Delete:
             self._delete_selected()
         elif event.key() == Qt.Key.Key_Escape:
-            self._scene.clearSelection()
+            if getattr(self, "_in_presentation", False):
+                self.exit_presentation_mode()
+            else:
+                self._scene.clearSelection()
+        elif event.key() == Qt.Key.Key_F11:
+            self._toggle_presentation_mode()
         else:
             super().keyPressEvent(event)
 
@@ -742,6 +870,7 @@ class GearLabApp(QMainWindow):
         bar = QToolBar("Playback", self)
         bar.setMovable(False)
         self.addToolBar(Qt.ToolBarArea.BottomToolBarArea, bar)
+        self._main_toolbar = bar
 
         # --- Gear editing controls (E03-S2) ---
         self._btn_add_gear = QPushButton("＋ Add Gear")

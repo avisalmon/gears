@@ -27,10 +27,11 @@ class AppMode(str, Enum):
 
 _EDIT_CONTROLS:    frozenset[AppMode] = frozenset({AppMode.ENGINEER})
 _DEFECT_CONTROLS:  frozenset[AppMode] = frozenset({AppMode.ENGINEER})
-_FORMULA_PANEL:    frozenset[AppMode] = frozenset({AppMode.STUDENT, AppMode.ENGINEER})
+_FORMULA_PANEL:    frozenset[AppMode] = frozenset({AppMode.STUDENT, AppMode.ENGINEER, AppMode.PRESENTATION})
 _FULL_RATIO_BADGE: frozenset[AppMode] = frozenset({AppMode.STUDENT, AppMode.ENGINEER})
 _MIN_RATIO_BADGE:  frozenset[AppMode] = frozenset({AppMode.EXPLORER})
-# PUZZLE / PRESENTATION → "hidden"
+_PRES_BADGE:       frozenset[AppMode] = frozenset({AppMode.PRESENTATION})
+# PUZZLE → "hidden"
 
 
 # ---------------------------------------------------------------------------
@@ -70,14 +71,17 @@ class ModeController:
 
     def ratio_badge_style(self) -> str:
         """
-        Return "full" | "minimal" | "hidden" for ratio badge rendering.
+        Return "full" | "minimal" | "presentation" | "hidden".
 
-        full     — tooth-count ratio + RPM values (Student / Engineer)
-        minimal  — plain ratio fraction only (Explorer)
-        hidden   — no badges (Puzzle / Presentation)
+        full         — tooth-count ratio + RPM values (Student / Engineer)
+        minimal      — plain ratio fraction only (Explorer)
+        presentation — large ratio label (Presentation mode)
+        hidden       — no badges (Puzzle)
         """
         if self.current in _FULL_RATIO_BADGE:
             return "full"
         if self.current in _MIN_RATIO_BADGE:
             return "minimal"
+        if self.current in _PRES_BADGE:
+            return "presentation"
         return "hidden"
